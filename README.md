@@ -32,10 +32,11 @@ aliases=alias1,alias2,alias3
 
 
 
-Usage:
+Example usage:
 
 (You can see the full example in ZioPropertiesExample.scala)
 
+```scala
 def run(args: List[String]): ZIO[ZEnv, Nothing, Int] = {
     //create the descriptor for your AppProperties
     val desc = descriptor[AppProperties]
@@ -49,4 +50,5 @@ def run(args: List[String]): ZIO[ZEnv, Nothing, Int] = {
     p.tapError(err => putStrLn(err.toString()))
       .map(_ => 0) orElse ZIO.succeed(1)
   }
+```
 
