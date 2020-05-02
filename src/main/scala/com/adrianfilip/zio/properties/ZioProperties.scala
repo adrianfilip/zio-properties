@@ -81,9 +81,9 @@ object ZioProperties {
 
   final case class Profile(profile: Option[String], propertiesFile: Option[String])
 
-  private def getProfile(argsConfigSource: ConfigSource[String, String]): Profile = {
+  private def getProfile(configSource: ConfigSource[String, String]): Profile = {
     val desc   = descriptor[Profile]
-    val params = desc.from(argsConfigSource)
+    val params = desc.from(configSource)
     read(params) match {
       case Left(_)      => Profile(None, None)
       case Right(value) => value
