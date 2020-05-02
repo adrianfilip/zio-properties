@@ -44,27 +44,27 @@ Example usage:
 
 ```scala
 def run(args: List[String]): ZIO[ZEnv, Nothing, Int] = {
-    //create the descriptor for your AppProperties
-    val desc = descriptor[AppProperties]
+  //create the descriptor for your AppProperties
+  val desc = descriptor[AppProperties]
 
-    val p = for {
-      //provide the arguments from main method and the descriptor to create the Layer
-      layer <- ZioProperties.createPropertiesLayer(args, desc)
-      props <- myProgram.provideCustomLayer(layer)
-    } yield props
+  val p = for {
+    //provide the arguments from main method and the descriptor to create the Layer
+    layer <- ZioProperties.createPropertiesLayer(args, desc)
+    props <- myProgram.provideCustomLayer(layer)
+  } yield props
 
-    ...
-  }
+  ...
+}
 
 
 /**
-   * Effects that require AppProperties can retrieve it from the Layer
-   */
-  val myProgram: ZIO[Config[AppProperties] with Console, Nothing, AppProperties] =
-    for {
-      myProps <- config[AppProperties]
-      _       <- putStrLn(myProps.toString())
-    } yield myProps
-      
+ * Effects that require AppProperties can retrieve it from the Layer
+*/
+val myProgram: ZIO[Config[AppProperties] with Console, Nothing, AppProperties] =
+  for {
+    myProps <- config[AppProperties]
+    _       <- putStrLn(myProps.toString())
+  } yield myProps
+  
 ```
 
