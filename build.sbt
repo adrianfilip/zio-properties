@@ -7,7 +7,7 @@ lazy val library =
 
     object Version {
       val zio = "1.0.0-RC18-2"
-      val zioConfig = "1.0.0-RC16-1"
+      val zioConfig = "1.0.0-RC16-2"
     }
 
     val zio = "dev.zio" %% "zio" % Version.zio
@@ -30,7 +30,8 @@ lazy val root =
         library.zio,
         library.zioConfig,
         library.zioTest % Test,
-        library.zioTestSbt % Test
+        library.zioTestSbt % Test,
+        "dev.zio" %% "zio-config-magnolia" % "1.0.0-RC16-2",
       ),
       testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
     )

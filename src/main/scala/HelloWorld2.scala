@@ -4,7 +4,7 @@ import zio.{ ZEnv, ZIO }
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.magnolia.DeriveConfigDescriptor
 
-object HelloWorld extends App {
+object HelloWorld2 extends App {
 
   final case class DBConfig(host: String, port: Int)
   final case class MyConfig(db: DBConfig, alias: Option[String])
@@ -50,32 +50,6 @@ object HelloWorld extends App {
 
   def prog(): ZIO[ZEnv, Throwable, Any] =
     ZIO.succeed(0)
-
-  assert {
-    val envConfigLayer = Config.fromMap(
-      Map("DB_HOST" -> "localhost", "DB_PORT" -> "8080", "ALIAS" -> "mysite.com").map {
-        case (k, v) => (k.toLowerCase, v)
-      },
-      myConfigSource,
-      "",
-      Some('_'),
-      Some(',')
-    )
-
-    // val appPropertiesConfigLayer = Config.fromMap(
-    //   Map("db.host" -> "localhost", "db.port" -> "8080", "alias" -> "mysite.com"),
-    //   myConfigSource,
-    //   "",
-    //   Some('.'),
-    //   Some(',')
-    // )
-
-    zio.Runtime.default
-      .unsafeRun(evaluateProperties.provideLayer(envConfigLayer)) == MyConfig(
-      DBConfig("localhost", 8080),
-      Some("mysite.com")
-    )
-  }
 
   assert {
     val envConfigLayer = Config.fromMap(
