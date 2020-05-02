@@ -53,8 +53,18 @@ def run(args: List[String]): ZIO[ZEnv, Nothing, Int] = {
       props <- myProgram.provideCustomLayer(layer)
     } yield props
 
-    p.tapError(err => putStrLn(err.toString()))
-      .map(_ => 0) orElse ZIO.succeed(1)
+    ...
   }
+
+
+/**
+   * Effects that require AppProperties can retrieve it from the Layer
+   */
+  val myProgram: ZIO[Config[AppProperties] with Console, Nothing, AppProperties] =
+    for {
+      myProps <- config[AppProperties]
+      _       <- putStrLn(myProps.toString())
+    } yield myProps
+      
 ```
 
