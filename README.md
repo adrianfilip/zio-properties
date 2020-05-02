@@ -28,3 +28,25 @@ aliases=alias1,alias2,alias3
 4. properties file => keyDelimiter="." , valueDelimiter="," 
 db.port=3306
 aliases=alias1,alias2,alias3
+
+
+
+
+Usage:
+
+(You can see the full example in ZioPropertiesExample.scala)
+
+def run(args: List[String]): ZIO[ZEnv, Nothing, Int] = {
+    //create the descriptor for your AppProperties
+    val desc = descriptor[AppProperties]
+
+    val p = for {
+      //provide the arguments from main method and the descriptor to create the Layer
+      layer <- ZioProperties.createPropertiesLayer(args, desc)
+      props <- myProgram.provideCustomLayer(layer)
+    } yield props
+
+    p.tapError(err => putStrLn(err.toString()))
+      .map(_ => 0) orElse ZIO.succeed(1)
+  }
+
