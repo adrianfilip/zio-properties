@@ -14,18 +14,22 @@ Property resolution order:
 How the properties must be provided for each source:
 
 1. command line arguments  => keyDelimiter="." , valueDelimiter="," 
+
 -db.port=3306
 -aliases=alias1,alias2,alias3
 
 2. system properties => keyDelimiter="_" , valueDelimiter="," 
+
 db_port=3306
 aliases=alias1,alias2,alias3
 
 3. environment properties => keyDelimiter="_" , valueDelimiter="," 
+
 db_port=3306
 aliases=alias1,alias2,alias3
 
 4. properties file => keyDelimiter="." , valueDelimiter="," 
+
 db.port=3306
 aliases=alias1,alias2,alias3
 
