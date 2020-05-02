@@ -74,7 +74,7 @@ lazy val stdOptions = Seq(
   "-Ywarn-value-discard",
   "-unchecked",
   "-deprecation",
-  // "-Xfatal-warnings"
+  "-Xfatal-warnings"
 )
 
 lazy val stdOpts213 = Seq(

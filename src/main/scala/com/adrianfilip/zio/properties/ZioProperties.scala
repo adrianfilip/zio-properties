@@ -10,12 +10,12 @@ import izumi.reflect.Tags.Tag
 import zio.Task
 
 /**
-  * Property resolution order:
-  * - command line arguments
-  * - system properties
-  * - environment variables
-  * - properties file
-  */
+ * Property resolution order:
+ * - command line arguments
+ * - system properties
+ * - environment variables
+ * - properties file
+ */
 object ZioProperties {
 
   def createPropertiesLayer[T: Tag](
@@ -53,7 +53,6 @@ object ZioProperties {
                          Some('.'),
                          Some(',')
                        )
-
     } yield List(argsConfigSource, systemPropsSource, envPropsSource, appPropsSource)
   }
 
@@ -65,10 +64,12 @@ object ZioProperties {
     for {
       properties <- ZIO.bracket(
                      ZIO.effect(getClass.getResourceAsStream(file))
-                   )(r => ZIO.effectTotal(r.close())) { inputStream =>
+                   )(r => ZIO.effectTotal(if (r != null) r.close())) { inputStream =>
                      ZIO.effect {
                        val properties = new java.util.Properties()
-                       properties.load(inputStream)
+                       if (inputStream != null) {
+                         properties.load(inputStream)
+                       }
                        properties
                      }
                    }
@@ -89,32 +90,5 @@ object ZioProperties {
       case Right(value) => value
     }
   }
-
-}
-
-object myapi2 extends zio.App {
-  import zio.console._
-
-  def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] = {
-    val desc = descriptor[MyConfig]
-
-    val program = for {
-      layer <- ZioProperties.createPropertiesLayer(args, desc)
-      props <- myEffect.provideLayer(layer)
-    } yield props
-
-    program
-      .flatMap(r => putStrLn(r.toString()))
-      .tapError(err => putStrLn(err.toString()))
-      .map(_ => 0) orElse ZIO.succeed(1)
-  }
-
-  case class MyConfig(username: String, db: Db, aliases: List[String])
-  case class Db(host: String, port: String)
-
-  val myEffect: ZIO[Config[MyConfig], Nothing, MyConfig] =
-    for {
-      myProps <- config[MyConfig]
-    } yield myProps
 
 }
