@@ -11,19 +11,25 @@ import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import HelloWorld._
 
 object HelloWorld {
-  def sayHello: ZIO[Console, Nothing, Unit] =
-    console.putStrLn("Hello, World!")
-
-  case class AppProperties(username: String, db: Db, aliases: List[String])
+  case class AppProperties(
+    profile: Option[String],
+    propertiesFile: Option[String],
+    username: String,
+    db: Db,
+    aliases: List[String]
+  )
   case class Db(host: String, port: String)
 }
 
 object HelloWorldSpec extends DefaultRunnableSpec {
   def spec = suite("HelloWorldSpec")(
-    testM("sayHello correctly displays output") {
+
+    testM("respects property resolution order") {
+
+
       val desc = descriptor[AppProperties]
       for {
-        layer  <- ZioProperties.createPropertiesLayer(List.empty, desc)
+        layer  <- ZioProperties.createPropertiesLayer(List("-profile=xxx"), desc)
         props  <- config[AppProperties].provideLayer(layer)
         _      <- putStr(props.toString())
         output <- TestConsole.output

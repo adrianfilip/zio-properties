@@ -39,24 +39,62 @@ object ZioProperties {
       systemPropsSource <- ConfigSource.fromSystemProperties(Some('_'), Some(','))
       envPropsSource    <- ConfigSource.fromSystemEnv(Some('_'), Some(','))
       profile           = getProfile(unifySources(List(argsConfigSource, systemPropsSource, envPropsSource)))
-      propertiesFile = profile.propertiesFile match {
-        case Some(value) => s"/$value"
-        case None =>
-          profile.profile.map(_.toLowerCase()).getOrElse(NO_PROFILE) match {
-            case NO_PROFILE => "/application.properties"
-            case PROD       => "/application.properties"
-            case profile    => s"/application-$profile.properties"
-          }
-      }
-      appPropsSource <- fromPropertiesResource(
-                         propertiesFile,
-                         Some('.'),
-                         Some(',')
-                       )
+      appPropsSource <- profile.propertiesFile match {
+                         case Some(value) =>
+                           fromPropertiesResource(s"/$value", Some('.'), Some(','))
+                         case None =>
+                           fromPropertiesResourceIfPresent(
+                             profile.profile.map(_.toLowerCase()).getOrElse(NO_PROFILE) match {
+                               case NO_PROFILE => "/application.properties"
+                               case PROD       => "/application.properties"
+                               case profile    => s"/application-$profile.properties"
+                             },
+                             Some('.'),
+                             Some(',')
+                           )
+                       }
     } yield List(argsConfigSource, systemPropsSource, envPropsSource, appPropsSource)
   }
 
+  /**
+    * Will fail if the file is not found.
+    *
+    * @param file
+    * @param keyDelimiter
+    * @param valueDelimiter
+    * @return
+    */
   def fromPropertiesResource[A](
+    file: String,
+    keyDelimiter: Option[Char] = None,
+    valueDelimiter: Option[Char] = None
+  ): Task[ConfigSource[String, String]] =
+    for {
+      properties <- ZIO.bracket(
+                     ZIO.effect(getClass.getResourceAsStream(file))
+                   )(r => ZIO.effectTotal(r.close())) { inputStream =>
+                     ZIO.effect {
+                       val properties = new java.util.Properties()
+                       properties.load(inputStream)
+                       properties
+                     }
+                   }
+    } yield ConfigSource.fromProperties(
+      properties,
+      file,
+      keyDelimiter,
+      valueDelimiter
+    )
+
+    /**
+      * Will not fail if file is not found. Instead it will create a ConfigSource from an empty java.util.Properties
+      *
+      * @param file
+      * @param keyDelimiter
+      * @param valueDelimiter
+      * @return
+      */
+  def fromPropertiesResourceIfPresent[A](
     file: String,
     keyDelimiter: Option[Char] = None,
     valueDelimiter: Option[Char] = None
