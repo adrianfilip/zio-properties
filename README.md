@@ -40,7 +40,9 @@ aliases=alias1,alias2,alias3
 4. HOCON file 
 
 db {
+
   port=3306
+  
 }
 
 aliases=["alias1","alias2","alias3"]
