@@ -43,7 +43,7 @@ db {
   port=3306
 }
 
-aliases=alias1,alias2,alias3
+aliases=["alias1","alias2","alias3"]
 
 5. properties file => keyDelimiter="." , valueDelimiter="," 
 
