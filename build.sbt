@@ -15,6 +15,8 @@ lazy val library =
     val zioTestSbt = "dev.zio" %% "zio-test-sbt" % Version.zio
 
     val zioConfig = "dev.zio" %% "zio-config" % Version.zioConfig
+    val zioConfigTypesafe = "dev.zio" %% "zio-config-typesafe" % Version.zioConfig
+    val zioConfigMagnolia = "dev.zio" %% "zio-config-magnolia" % Version.zioConfig
   }
 
 // *****************************************************************************
@@ -29,9 +31,10 @@ lazy val root =
       libraryDependencies ++= Seq(
         library.zio,
         library.zioConfig,
+        library.zioConfigTypesafe,
+        library.zioConfigMagnolia,
         library.zioTest % Test,
-        library.zioTestSbt % Test,
-        "dev.zio" %% "zio-config-magnolia" % "1.0.0-RC16-2",
+        library.zioTestSbt % Test
       ),
       testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
     )

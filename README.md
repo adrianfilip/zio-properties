@@ -3,6 +3,12 @@ Property resolution order:
 - command line arguments
 - system properties
 - environment variables
+- HOCON file
+    - if the hoconFile property is present the mentioned file will be used (and profile is ignored for HOCON file resolution). Fails if file not found in classpath.
+    - if hoconFile is not present and profile is not present application.conf file will be used if present (does not fail if file not found in classpath)
+    - if profile is present
+        - and has a value that when lowercased equals "prod" or is empty string then application.conf file will be used if present (does not fail if file not found in classpath) otherwise
+        - the application-${lowercase.profile}.conf file will be used if present (does not fail if file not found in classpath) otherwise
 - properties file
     - if the propertiesFile property is present the mentioned file will be used (and profile is ignored for properties file resolution). Fails if file not found in classpath.
     - if propertiesFile is not present and profile is not present application.properties file will be used if present (does not fail if file not found in classpath)
@@ -31,7 +37,15 @@ db_port=3306
 
 aliases=alias1,alias2,alias3
 
-4. properties file => keyDelimiter="." , valueDelimiter="," 
+4. HOCON file 
+
+db {
+  port=3306
+}
+
+aliases=alias1,alias2,alias3
+
+5. properties file => keyDelimiter="." , valueDelimiter="," 
 
 db.port=3306
 
