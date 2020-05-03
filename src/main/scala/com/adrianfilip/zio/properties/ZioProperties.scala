@@ -1,19 +1,20 @@
 package com.adrianfilip.zio.properties
 
-import zio.config._
-import zio.config.ConfigSource
-import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-import zio.ZLayer
-import zio.ZIO
-import zio.Has
+import java.io.File
+
+import com.typesafe.config.ConfigFactory
 import izumi.reflect.Tags.Tag
-import zio.Task
+import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+import zio.config.typesafe._
+import zio.config.{ ConfigSource, _ }
+import zio.{ Has, Task, ZIO, ZLayer }
 
 /**
  * Property resolution order:
  * - command line arguments
  * - system properties
  * - environment variables
+ * - HOCON file
  * - properties file
  */
 object ZioProperties {
@@ -39,6 +40,18 @@ object ZioProperties {
       systemPropsSource <- ConfigSource.fromSystemProperties(Some('_'), Some(','))
       envPropsSource    <- ConfigSource.fromSystemEnv(Some('_'), Some(','))
       profile           = getProfile(unifySources(List(argsConfigSource, systemPropsSource, envPropsSource)))
+      appHoconSource <- profile.hoconFile match {
+                         case Some(value) =>
+                           fromHoconResource(s"/$value")
+                         case None =>
+                           fromHoconResourceIfPresent(
+                             profile.profile.map(_.toLowerCase()).getOrElse(NO_PROFILE) match {
+                               case NO_PROFILE => "/application.conf"
+                               case PROD       => "/application.conf"
+                               case profile    => s"/application-$profile.conf"
+                             }
+                           )
+                       }
       appPropsSource <- profile.propertiesFile match {
                          case Some(value) =>
                            fromPropertiesResource(s"/$value", Some('.'), Some(','))
@@ -53,17 +66,17 @@ object ZioProperties {
                              Some(',')
                            )
                        }
-    } yield List(argsConfigSource, systemPropsSource, envPropsSource, appPropsSource)
+    } yield List(argsConfigSource, systemPropsSource, envPropsSource, appHoconSource, appPropsSource)
   }
 
   /**
-    * Will fail if the file is not found.
-    *
-    * @param file
-    * @param keyDelimiter
-    * @param valueDelimiter
-    * @return
-    */
+   * Will fail if the file is not found.
+   *
+   * @param file
+   * @param keyDelimiter
+   * @param valueDelimiter
+   * @return
+   */
   def fromPropertiesResource[A](
     file: String,
     keyDelimiter: Option[Char] = None,
@@ -86,14 +99,14 @@ object ZioProperties {
       valueDelimiter
     )
 
-    /**
-      * Will not fail if file is not found. Instead it will create a ConfigSource from an empty java.util.Properties
-      *
-      * @param file
-      * @param keyDelimiter
-      * @param valueDelimiter
-      * @return
-      */
+  /**
+   * Will not fail if file is not found. Instead it will create a ConfigSource from an empty java.util.Properties
+   *
+   * @param file
+   * @param keyDelimiter
+   * @param valueDelimiter
+   * @return
+   */
   def fromPropertiesResourceIfPresent[A](
     file: String,
     keyDelimiter: Option[Char] = None,
@@ -118,13 +131,55 @@ object ZioProperties {
       valueDelimiter
     )
 
-  final case class Profile(profile: Option[String], propertiesFile: Option[String])
+  /**
+   * Will fail if the file is not found.
+   *
+   * @param file
+   * @return
+   */
+  def fromHoconResource[A](file: String): Task[ConfigSource[String, String]] =
+    for {
+      resourceURI <- ZIO
+                      .fromOption(Option(getClass.getResource(file)).map(_.toURI))
+                      .mapError(_ => new RuntimeException(s"$file not found in classpath!"))
+      fileInstance <- Task(new File(resourceURI))
+      configSource <- ZIO
+                       .fromEither(
+                         TypesafeConfigSource.fromTypesafeConfig(ConfigFactory.parseFile(fileInstance).resolve)
+                       )
+                       .mapError(error => new RuntimeException(error))
+    } yield configSource
+
+  /**
+   * Will not fail if file is not found. Instead it will create a ConfigSource from an empty HOCON string
+   *
+   * @param file
+   * @return
+   */
+  def fromHoconResourceIfPresent[A](file: String): Task[ConfigSource[String, String]] =
+    Option(getClass.getResource(file)).map(_.toURI) match {
+      case Some(uri) =>
+        Task(new File(uri)).flatMap(fileInstance =>
+          TypesafeConfigSource
+            .fromTypesafeConfig(ConfigFactory.parseFile(fileInstance).resolve) match {
+            case Left(value)  => Task.fail(new RuntimeException(value))
+            case Right(value) => Task.succeed(value)
+          }
+        )
+      case None => Task.succeed(ConfigSource.empty)
+    }
+
+  final case class Profile(
+    profile: Option[String],
+    hoconFile: Option[String],
+    propertiesFile: Option[String]
+  )
 
   private def getProfile(configSource: ConfigSource[String, String]): Profile = {
     val desc   = descriptor[Profile]
     val params = desc.from(configSource)
     read(params) match {
-      case Left(_)      => Profile(None, None)
+      case Left(_)      => Profile(None, None, None)
       case Right(value) => value
     }
   }

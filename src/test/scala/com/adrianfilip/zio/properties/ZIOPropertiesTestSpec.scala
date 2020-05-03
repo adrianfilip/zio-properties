@@ -12,11 +12,14 @@ object ZIOPropertiesTest {
   case class AppProperties(
     profile: Option[String],
     propertiesFile: Option[String],
+    hoconFile: Option[String],
     username: String,
     db: Db,
+    kafka: Kafka,
     aliases: List[String]
   )
   case class Db(host: String, port: Int)
+  case class Kafka(port: Option[Int])
 
   val appPropertiesDescriptor = descriptor[AppProperties]
 
@@ -30,11 +33,13 @@ object ZIOPropertiesTestSpec extends DefaultRunnableSpec {
           AppProperties(
             profile = None,
             propertiesFile = None,
+            hoconFile = None,
             username = "diana",
             db = Db(
               host = "localhost-diana",
               port = 8083
             ),
+            kafka = Kafka(Some(9092)),
             aliases = List("alias-d1", "alias-d2", "alias-d3")
           )
 
@@ -48,11 +53,13 @@ object ZIOPropertiesTestSpec extends DefaultRunnableSpec {
           AppProperties(
             profile = Some("dev"),
             propertiesFile = None,
+            hoconFile = None,
             username = "hal",
             db = Db(
               host = "localhost-hal",
               port = 8084
             ),
+            kafka = Kafka(Some(9093)),
             aliases = List("alias-h1", "alias-h2", "alias-h3")
           )
 
@@ -67,11 +74,13 @@ object ZIOPropertiesTestSpec extends DefaultRunnableSpec {
           AppProperties(
             profile = Some("dev"),
             propertiesFile = None,
+            hoconFile = None,
             username = "hal",
             db = Db(
               host = "localhost-hal",
               port = 8084
             ),
+            kafka = Kafka(Some(9093)),
             aliases = List("alias-h1", "alias-h2", "alias-h3")
           )
 
@@ -92,11 +101,13 @@ object ZIOPropertiesTestSpec extends DefaultRunnableSpec {
           AppProperties(
             profile = Some("dev"),
             propertiesFile = Some("custom.properties"),
+            hoconFile = None,
             username = "wally",
             db = Db(
               host = "localhost-wally",
               port = 8085
             ),
+            kafka = Kafka(Some(9093)),
             aliases = List("alias-w1", "alias-w2", "alias-w3")
           )
 
@@ -124,12 +135,14 @@ object ZIOPropertiesTestSpec extends DefaultRunnableSpec {
           AppProperties(
             profile = Some("dev"),  //from system properties - prio 2
             propertiesFile = None,   //not provided anywhere
-            username = "hal",  //from props file - prio 4
+            hoconFile = None, //not provided anywhere
+            username = "hal",  //from props file - prio 5
             db = Db(
               host = "127.0.0.1",  // because system properties is prio 2
               port = 9000    //because args is prio 1
             ),
-            aliases = List("alias-h1", "alias-h2", "alias-h3")   //from props file - prio 4
+            kafka = Kafka(Some(9093)), // because hocon file is prio 4
+            aliases = List("alias-h1", "alias-h2", "alias-h3")   //from props file - prio 5
           )
 
         Task {
@@ -138,12 +151,44 @@ object ZIOPropertiesTestSpec extends DefaultRunnableSpec {
         }.bracket(_ =>
           UIO {
             java.lang.System.clearProperty("profile")
-            java.lang.System.clearProperty("db.host")
+            java.lang.System.clearProperty("db_host")
            
           }
         ) { _ =>
           for {
             layer <- ZioProperties.createPropertiesLayer(args, appPropertiesDescriptor)
+            props <- config[AppProperties].provideLayer(layer)
+          } yield assert(props)(equalTo(expected))
+        }
+      },
+      testM("if hoconFile and propertyFile present in system properties it uses given propertyFile and hoconFile regardless of profile value") {
+        val expected =
+          AppProperties(
+            profile = Some("dev"),
+            propertiesFile = Some("custom.properties"),
+            hoconFile = Some("custom.conf"),
+            username = "wally",
+            db = Db(
+              host = "localhost-wally",
+              port = 8085
+            ),
+            kafka = Kafka(Some(9094)),
+            aliases = List("alias-hc1", "alias-hc2")
+          )
+
+        Task {
+          java.lang.System.setProperty("profile", "dev")
+          java.lang.System.setProperty("propertiesFile", "custom.properties")
+          java.lang.System.setProperty("hoconFile", "custom.conf")
+        }.bracket(_ =>
+          UIO {
+            java.lang.System.clearProperty("profile")
+            java.lang.System.clearProperty("propertiesFile")
+            java.lang.System.clearProperty("hoconFile")
+          }
+        ) { _ =>
+          for {
+            layer <- ZioProperties.createPropertiesLayer(List.empty, appPropertiesDescriptor)
             props <- config[AppProperties].provideLayer(layer)
           } yield assert(props)(equalTo(expected))
         }
