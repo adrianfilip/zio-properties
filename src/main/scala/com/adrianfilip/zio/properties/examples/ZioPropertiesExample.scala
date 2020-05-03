@@ -36,6 +36,6 @@ object ZioPropertiesExample extends zio.App {
     } yield myProps
 
   case class AppProperties(username: String, db: Db, aliases: List[String])
-  case class Db(host: String, port: String)
+  case class Db(host: String, port: Int)
 
 }
