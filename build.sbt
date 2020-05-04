@@ -54,7 +54,7 @@ lazy val commonSettings =
     organization := "com.adrianfilip"
   )
 
-crossScalaVersions := List("2.12.10")
+crossScalaVersions := List("2.13.1", "2.12.10")
 
 lazy val commandAliases =
   addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt") ++
@@ -109,7 +109,7 @@ lazy val stdOpts212 = Seq(
   "242"
 )
 
-version := "1.1"
+version := "1.2"
 
 
 def extraOptions(scalaVersion: String) = CrossVersion.partialVersion(scalaVersion) match {
