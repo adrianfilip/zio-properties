@@ -1,4 +1,8 @@
+Usage:
 
+"com.adrianfilip" %% "zio-properties" % "1.0"
+
+------------------------------------------------------------
 Property resolution order:
 - command line arguments
 - system properties
