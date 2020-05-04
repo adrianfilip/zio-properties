@@ -51,8 +51,10 @@ lazy val commonSettings =
   Seq(
     name := "zio-properties",
     scalaVersion := "2.13.1",
-    organization := "com.example"
+    organization := "com.adrianfilip"
   )
+
+crossScalaVersions := List("2.12.10")
 
 lazy val commandAliases =
   addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt") ++
@@ -89,10 +91,36 @@ lazy val stdOpts213 = Seq(
   "-Wvalue-discard"
 )
 
-scalacOptions := stdOptions ++ stdOpts213
+lazy val stdOpts212 = Seq(
+  "-opt-warnings",
+  "-Ywarn-extra-implicit",
+  "-Ywarn-unused:_,imports",
+  "-Ywarn-unused:imports",
+  "-Ypartial-unification",
+  "-Yno-adapted-args",
+  "-Ywarn-inaccessible",
+  "-Ywarn-infer-any",
+  "-Ywarn-nullary-override",
+  "-Ywarn-nullary-unit",
+  "-Ywarn-unused:params,-implicits",
+  "-Xfuture",
+  "-Xsource:2.13",
+  "-Xmax-classfile-name",
+  "242"
+)
 
-useGpg := true
+version := "1.1"
 
+
+def extraOptions(scalaVersion: String) = CrossVersion.partialVersion(scalaVersion) match {
+  case Some((2, 13)) =>
+    stdOpts213
+  case Some((2, 12)) =>
+    stdOpts212
+  case _ => Seq.empty
+}
+
+scalacOptions := stdOptions ++ extraOptions(scalaVersion.value)
 
 ThisBuild / organization := "com.adrianfilip.zio-properties"
 ThisBuild / organizationName := "adrianfilip"
