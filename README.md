@@ -4,12 +4,14 @@ Property resolution order:
 - system properties
 - environment variables
 - HOCON file
+    - Looks for an application.conf if hoconFile and profile properties are not present in any previous source and application.conf in present in the classpath
     - if the hoconFile property is present the mentioned file will be used (and profile is ignored for HOCON file resolution). Fails if file not found in classpath.
     - if hoconFile is not present and profile is not present application.conf file will be used if present (does not fail if file not found in classpath)
     - if profile is present
         - and has a value that when lowercased equals "prod" or is empty string then application.conf file will be used if present (does not fail if file not found in classpath) otherwise
         - the application-${lowercase.profile}.conf file will be used if present (does not fail if file not found in classpath) otherwise
 - properties file
+    -  Looks for an application.properties if propertiesFile and profile properties are not present in any previous source and application.properties in present in the classpath
     - if the propertiesFile property is present the mentioned file will be used (and profile is ignored for properties file resolution). Fails if file not found in classpath.
     - if propertiesFile is not present and profile is not present application.properties file will be used if present (does not fail if file not found in classpath)
     - if profile is present
