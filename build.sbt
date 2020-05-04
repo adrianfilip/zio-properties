@@ -51,8 +51,10 @@ lazy val commonSettings =
   Seq(
     name := "zio-properties",
     scalaVersion := "2.13.1",
-    organization := "com.example"
+    organization := "com.adrianfilip"
   )
+
+crossScalaVersions := List("2.13.1", "2.12.10")
 
 lazy val commandAliases =
   addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt") ++
@@ -89,4 +91,65 @@ lazy val stdOpts213 = Seq(
   "-Wvalue-discard"
 )
 
-scalacOptions := stdOptions ++ stdOpts213
+lazy val stdOpts212 = Seq(
+  "-opt-warnings",
+  "-Ywarn-extra-implicit",
+  "-Ywarn-unused:_,imports",
+  "-Ywarn-unused:imports",
+  "-Ypartial-unification",
+  "-Yno-adapted-args",
+  "-Ywarn-inaccessible",
+  "-Ywarn-infer-any",
+  "-Ywarn-nullary-override",
+  "-Ywarn-nullary-unit",
+  "-Ywarn-unused:params,-implicits",
+  "-Xfuture",
+  "-Xsource:2.13",
+  "-Xmax-classfile-name",
+  "242"
+)
+
+version := "1.0"
+
+
+def extraOptions(scalaVersion: String) = CrossVersion.partialVersion(scalaVersion) match {
+  case Some((2, 13)) =>
+    stdOpts213
+  case Some((2, 12)) =>
+    stdOpts212
+  case _ => Seq.empty
+}
+
+scalacOptions := stdOptions ++ extraOptions(scalaVersion.value)
+
+ThisBuild / organization := "com.adrianfilip.zio-properties"
+ThisBuild / organizationName := "adrianfilip"
+ThisBuild / organizationHomepage := Some(url("http://adrianfilip.com/"))
+
+ThisBuild / scmInfo := Some(
+  ScmInfo(
+    url("https://github.com/adrianfilip/zio-properties"),
+    "scm:git@github.com:adrianfilip/zio-properties.git"
+  )
+)
+ThisBuild / developers := List(
+  Developer(
+    id    = "adrianfilip",
+    name  = "Adrian Filip",
+    email = "realadrianfilip@gmail.com",
+    url   = url("https://adrianfilip.com")
+  )
+)
+
+ThisBuild / description := "Config ZIO apps from multiple property sources having a standard property resolution order."
+ThisBuild / licenses := List("Apache 2" -> new URL("http://www.apache.org/licenses/LICENSE-2.0.txt"))
+ThisBuild / homepage := Some(url("https://github.com/adrianfilip/zio-properties"))
+
+// Remove all additional repository other than Maven Central from POM
+ThisBuild / pomIncludeRepository := { _ => false }
+ThisBuild / publishTo := {
+  val nexus = "https://oss.sonatype.org/"
+  if (isSnapshot.value) Some("snapshots" at nexus + "content/repositories/snapshots")
+  else Some("releases" at nexus + "service/local/staging/deploy/maven2")
+}
+ThisBuild / publishMavenStyle := true

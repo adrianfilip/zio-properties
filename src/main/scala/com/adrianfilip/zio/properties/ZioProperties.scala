@@ -77,10 +77,10 @@ object ZioProperties {
    * @param valueDelimiter
    * @return
    */
-  def fromPropertiesResource[A](
+  private def fromPropertiesResource[A](
     file: String,
-    keyDelimiter: Option[Char] = None,
-    valueDelimiter: Option[Char] = None
+    keyDelimiter: Option[Char],
+    valueDelimiter: Option[Char]
   ): Task[ConfigSource[String, String]] =
     for {
       properties <- ZIO.bracket(
@@ -107,10 +107,10 @@ object ZioProperties {
    * @param valueDelimiter
    * @return
    */
-  def fromPropertiesResourceIfPresent[A](
+  private def fromPropertiesResourceIfPresent[A](
     file: String,
-    keyDelimiter: Option[Char] = None,
-    valueDelimiter: Option[Char] = None
+    keyDelimiter: Option[Char],
+    valueDelimiter: Option[Char]
   ): Task[ConfigSource[String, String]] =
     for {
       properties <- ZIO.bracket(
@@ -137,7 +137,7 @@ object ZioProperties {
    * @param file
    * @return
    */
-  def fromHoconResource[A](file: String): Task[ConfigSource[String, String]] =
+  private def fromHoconResource[A](file: String): Task[ConfigSource[String, String]] =
     for {
       resourceURI <- ZIO
                       .fromOption(Option(getClass.getResource(file)).map(_.toURI))
@@ -156,7 +156,7 @@ object ZioProperties {
    * @param file
    * @return
    */
-  def fromHoconResourceIfPresent[A](file: String): Task[ConfigSource[String, String]] =
+  private def fromHoconResourceIfPresent[A](file: String): Task[ConfigSource[String, String]] =
     Option(getClass.getResource(file)).map(_.toURI) match {
       case Some(uri) =>
         Task(new File(uri)).flatMap(fileInstance =>
@@ -169,7 +169,7 @@ object ZioProperties {
       case None => Task.succeed(ConfigSource.empty)
     }
 
-  final case class Profile(
+  private final case class Profile(
     profile: Option[String],
     hoconFile: Option[String],
     propertiesFile: Option[String]
