@@ -109,7 +109,7 @@ lazy val stdOpts212 = Seq(
   "242"
 )
 
-version := "1.2"
+version := "1.0"
 
 
 def extraOptions(scalaVersion: String) = CrossVersion.partialVersion(scalaVersion) match {
